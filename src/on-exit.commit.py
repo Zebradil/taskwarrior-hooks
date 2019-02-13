@@ -24,7 +24,7 @@ if subprocess.call("git diff --exit-code --quiet".split()) != 0:
 
 
 def r(cmd: str) -> str:
-    return subprocess.run(cmd.split(), capture_output=True).stdout.decode().strip()
+    return subprocess.run(cmd.split(), stdout=subprocess.PIPE).stdout.decode().strip()
 
 
 local = r(r"git rev-parse @")
