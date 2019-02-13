@@ -6,6 +6,8 @@ import sys
 
 TASK_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 
+os.chdir(TASK_DIR)
+
 if subprocess.call("git rev-parse --quiet".split()) != 0:
     print(f"{TASK_DIR} is not a git repository, skip commiting changes")
     sys.exit(1)
@@ -17,15 +19,11 @@ if len(sys.argv) > 1:
 if "args" not in c:
     c["args"] = "Taskwarrior version too old, no info available."
 
-os.chdir(TASK_DIR)
-
 if subprocess.call("git diff --exit-code --quiet".split()) != 0:
     subprocess.call("git commit -a".split() + ["-m" + c["args"]])
 
-
 def r(cmd: str) -> str:
     return subprocess.run(cmd.split(), stdout=subprocess.PIPE).stdout.decode().strip()
-
 
 local = r(r"git rev-parse @")
 remote = r(r"git rev-parse @{u}")
