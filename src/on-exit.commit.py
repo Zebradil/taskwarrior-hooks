@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
 
+import datetime
 import os
 import subprocess
 import sys
 
+UPDATE_TIMEOUT = datetime.timedelta(hours=1)
 TASK_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
+LAST_UPDATE_FILE = os.path.join(TASK_DIR, "_repo_updated_at")
 
 os.chdir(TASK_DIR)
 
@@ -25,9 +28,28 @@ if subprocess.call("git diff --exit-code --quiet".split()) != 0:
 def r(cmd: str) -> str:
     return subprocess.run(cmd.split(), stdout=subprocess.PIPE).stdout.decode().strip()
 
+requires_update = True
+try:
+    with open(LAST_UPDATE_FILE, "r") as f:
+        requires_update = datetime.datetime.utcnow() - datetime.datetime.utcfromtimestamp(int(f.read())) < UPDATE_TIMEOUT
+except:
+    pass
+
+if requires_update:
+    subprocess.call("git remote update".split())
+    with open(LAST_UPDATE_FILE, "w") as f:
+        f.write(str(int(datetime.datetime.utcnow().timestamp())))
+
 local = r(r"git rev-parse @")
 remote = r(r"git rev-parse @{u}")
 base = r(r"git merge-base @ @{u}")
 
-if local != remote and remote == base:
+if local == remote:
+    pass  # Up-to-date
+elif local == base:
+    print("Need to pull")
+    subprocess.call("git pull".split())
+elif remote == base:
     print(f"There are not published changes. Run 'cd {TASK_DIR}; git push'")
+else:
+    print("Something wrong, please inspect the repo")
