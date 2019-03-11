@@ -8,6 +8,7 @@ import sys
 UPDATE_TIMEOUT = datetime.timedelta(hours=1)
 TASK_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 LAST_UPDATE_FILE = os.path.join(TASK_DIR, "_repo_updated_at")
+NO_COMMIT_ENV = "TW_NO_COMMIT"
 
 os.chdir(TASK_DIR)
 
@@ -23,7 +24,11 @@ if "args" not in c:
     c["args"] = "Taskwarrior version too old, no info available."
 
 if subprocess.call("git diff --exit-code --quiet".split()) != 0:
-    subprocess.call("git commit -a".split() + ["-m" + c["args"]])
+    if not os.getenv(NO_COMMIT_ENV):
+        subprocess.call("git commit -a".split() + ["-m" + c["args"]])
+    else:
+        print(NO_COMMIT_ENV, " is set, no changes committed")
+
 
 def r(cmd: str) -> str:
     return subprocess.run(cmd.split(), stdout=subprocess.PIPE).stdout.decode().strip()
