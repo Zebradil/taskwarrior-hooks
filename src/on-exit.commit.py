@@ -33,12 +33,17 @@ if subprocess.call("git diff --exit-code --quiet".split()) != 0:
 def r(cmd: str) -> str:
     return subprocess.run(cmd.split(), stdout=subprocess.PIPE).stdout.decode().strip()
 
+
 requires_update = True
 try:
     with open(LAST_UPDATE_FILE, "r") as f:
-        requires_update = datetime.datetime.utcnow() - datetime.datetime.utcfromtimestamp(int(f.read())) < UPDATE_TIMEOUT
-except:
-    pass
+        last_update = datetime.datetime.utcnow() - datetime.datetime.fromtimestamp(int(f.read()))
+        if last_update > UPDATE_TIMEOUT:
+            print(f"Last update happend {last_update} ago")
+        else:
+            requires_update = False
+except Exception as e:
+    print(e)
 
 if requires_update:
     subprocess.call("git remote update".split())
